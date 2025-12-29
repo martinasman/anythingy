@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useSSEStream } from '@/hooks/useSSEStream'
 import { WorkspaceTabs } from '@/components/workspace/WorkspaceTabs'
 import { SideChat } from '@/components/workspace/SideChat'
-import { IntegrationsBar, type IntegrationProvider } from '@/components/workspace/IntegrationButton'
 import { Button } from '@/components/ui/button'
 import type { Business } from '@/types'
 import type { User } from '@supabase/supabase-js'
@@ -137,6 +136,14 @@ export default function WorkspacePage({
     )
   }
 
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'brand', label: 'Brand' },
+    { id: 'website', label: 'Website' },
+    { id: 'flow', label: 'Flow' },
+    { id: 'analytics', label: 'Analytics' },
+  ]
+
   return (
     <div className="h-screen bg-background flex">
       {/* Left Sidebar - Chat */}
@@ -153,18 +160,40 @@ export default function WorkspacePage({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-14 border-b border-border flex items-center justify-between px-4 shrink-0">
-          <div className="flex items-center gap-3">
+        {/* Unified Header with Tabs */}
+        <header className="h-12 border-b border-border flex items-center px-4 shrink-0 bg-white">
+          {/* Left: Back + Business Name */}
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => router.push('/')}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors text-lg"
             >
               ←
             </button>
-            <span className="text-foreground font-semibold truncate">
+            <span className="text-foreground font-semibold truncate max-w-[180px]">
               {business.business_name || 'New Business'}
             </span>
+          </div>
+
+          {/* Center: Tabs */}
+          <nav className="flex-1 flex items-center justify-center gap-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right: Status + User */}
+          <div className="flex items-center gap-3">
             {business.status === 'running' && (
               <span className="px-2 py-0.5 text-xs bg-amber-500/20 text-amber-700 rounded-full">
                 Generating...
@@ -180,22 +209,10 @@ export default function WorkspacePage({
                 Failed
               </span>
             )}
-          </div>
-          <div className="flex items-center gap-4">
-            <IntegrationsBar
-              onIntegrationClick={(provider: IntegrationProvider) => {
-                console.log('Integration clicked:', provider)
-                // TODO: Open integration modal
-              }}
-            />
-            <div className="w-px h-6 bg-border" />
             {user ? (
-              <>
-                <span className="text-sm text-muted-foreground">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  Sign out
-                </Button>
-              </>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
+                Sign out
+              </Button>
             ) : (
               <Link href="/login">
                 <Button size="sm">
@@ -206,7 +223,7 @@ export default function WorkspacePage({
           </div>
         </header>
 
-        {/* Tabs Content */}
+        {/* Tab Content */}
         <div className="flex-1 overflow-hidden">
           <WorkspaceTabs
             business={business}

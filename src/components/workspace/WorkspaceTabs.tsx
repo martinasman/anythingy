@@ -1,6 +1,5 @@
 'use client'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { WebsitePreview } from './WebsitePreview'
 import { FlowBuilder } from './FlowBuilder'
@@ -16,36 +15,29 @@ interface WorkspaceTabsProps {
 export function WorkspaceTabs({
   business,
   activeTab,
-  onTabChange,
 }: WorkspaceTabsProps) {
   return (
-    <Tabs
-      value={activeTab}
-      onValueChange={onTabChange}
-      className="h-full flex flex-col"
-    >
-      <TabsList className="grid w-full grid-cols-5 bg-white border-b border-[#E8DCC8]">
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="brand">Brand</TabsTrigger>
-        <TabsTrigger value="website">Website</TabsTrigger>
-        <TabsTrigger value="flow">Flow</TabsTrigger>
-        <TabsTrigger value="analytics">Analytics</TabsTrigger>
-      </TabsList>
-
-      <div className="flex-1 overflow-hidden">
-        <TabsContent value="overview" className="mt-0 h-full overflow-auto">
+    <div className="h-full">
+      {activeTab === 'overview' && (
+        <div className="h-full overflow-auto">
           <OverviewTab business={business} />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="brand" className="mt-0 h-full overflow-auto p-6">
+      {activeTab === 'brand' && (
+        <div className="h-full overflow-auto p-6">
           <BrandTab business={business} />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="website" className="mt-0 h-full">
+      {activeTab === 'website' && (
+        <div className="h-full">
           <WebsitePreview business={business} />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="flow" className="mt-0 h-full">
+      {activeTab === 'flow' && (
+        <div className="h-full">
           {business.customer_journey ? (
             <FlowBuilder customerJourney={business.customer_journey} />
           ) : (
@@ -53,13 +45,15 @@ export function WorkspaceTabs({
               Generating customer journey...
             </div>
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="analytics" className="mt-0 h-full overflow-auto p-6">
+      {activeTab === 'analytics' && (
+        <div className="h-full overflow-auto p-6">
           <AnalyticsTab />
-        </TabsContent>
-      </div>
-    </Tabs>
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
 import { generateWebsiteHTML, generateDefaultHTML } from '@/lib/website/generator'
 import type { Business } from '@/types'
@@ -12,7 +12,6 @@ interface WebsitePreviewProps {
 export function WebsitePreview({ business }: WebsitePreviewProps) {
   const [code, setCode] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview')
-  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   // Generate HTML when business data changes
   useEffect(() => {
@@ -27,19 +26,6 @@ export function WebsitePreview({ business }: WebsitePreviewProps) {
       setCode(generateDefaultHTML())
     }
   }, [business.website_structure, business.brand_colors, business.business_name])
-
-  // Update iframe when code changes
-  useEffect(() => {
-    if (iframeRef.current && code) {
-      const iframe = iframeRef.current
-      const doc = iframe.contentDocument || iframe.contentWindow?.document
-      if (doc) {
-        doc.open()
-        doc.write(code)
-        doc.close()
-      }
-    }
-  }, [code])
 
   const handleCodeChange = (value: string | undefined) => {
     if (value !== undefined) {
@@ -143,7 +129,7 @@ export function WebsitePreview({ business }: WebsitePreviewProps) {
         {activeTab === 'preview' ? (
           <div className="h-full bg-white">
             <iframe
-              ref={iframeRef}
+              srcDoc={code}
               className="w-full h-full border-0"
               title="Website Preview"
               sandbox="allow-scripts"

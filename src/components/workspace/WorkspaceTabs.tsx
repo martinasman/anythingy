@@ -1,10 +1,10 @@
 'use client'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { WebsitePreview } from './WebsitePreview'
 import { FlowBuilder } from './FlowBuilder'
+import { OverviewTab } from './OverviewTab'
 import type { Business } from '@/types'
 
 interface WorkspaceTabsProps {
@@ -33,7 +33,7 @@ export function WorkspaceTabs({
       </TabsList>
 
       <div className="flex-1 overflow-hidden">
-        <TabsContent value="overview" className="mt-0 h-full overflow-auto p-6">
+        <TabsContent value="overview" className="mt-0 h-full overflow-auto">
           <OverviewTab business={business} />
         </TabsContent>
 
@@ -63,112 +63,6 @@ export function WorkspaceTabs({
   )
 }
 
-function OverviewTab({ business }: { business: Business }) {
-  if (!business.business_canvas) {
-    return (
-      <div className="flex items-center justify-center h-64 text-[#8B7B6E]">
-        Generating business strategy...
-      </div>
-    )
-  }
-
-  const canvas = business.business_canvas
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-[#4A3F35]">
-          {business.business_name || 'Your Business'}
-        </h2>
-        {business.tagline && (
-          <p className="text-[#8B7B6E] mt-1">{business.tagline}</p>
-        )}
-      </div>
-
-      {/* Value Proposition */}
-      <Card className="p-4 bg-white border-[#E8DCC8]">
-        <h3 className="font-medium text-[#4A3F35] mb-2">Value Proposition</h3>
-        <p className="text-[#4A3F35]">{canvas.value_proposition}</p>
-      </Card>
-
-      {/* Problem & Solution */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-4 bg-white border-[#E8DCC8]">
-          <h3 className="font-medium text-[#4A3F35] mb-2">Problem</h3>
-          <p className="text-[#4A3F35] text-sm">{canvas.problem}</p>
-        </Card>
-        <Card className="p-4 bg-white border-[#E8DCC8]">
-          <h3 className="font-medium text-[#4A3F35] mb-2">Solution</h3>
-          <p className="text-[#4A3F35] text-sm">{canvas.solution}</p>
-        </Card>
-      </div>
-
-      {/* Canvas Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 bg-white border-[#E8DCC8]">
-          <h3 className="font-medium text-[#4A3F35] mb-2">Customer Segments</h3>
-          <ul className="space-y-1">
-            {canvas.customer_segments.map((segment, i) => (
-              <li key={i} className="text-[#4A3F35] text-sm">
-                • {segment}
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card className="p-4 bg-white border-[#E8DCC8]">
-          <h3 className="font-medium text-[#4A3F35] mb-2">Channels</h3>
-          <ul className="space-y-1">
-            {canvas.channels.map((channel, i) => (
-              <li key={i} className="text-[#4A3F35] text-sm">
-                • {channel}
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card className="p-4 bg-white border-[#E8DCC8]">
-          <h3 className="font-medium text-[#4A3F35] mb-2">Key Activities</h3>
-          <ul className="space-y-1">
-            {canvas.key_activities.map((activity, i) => (
-              <li key={i} className="text-[#4A3F35] text-sm">
-                • {activity}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
-
-      {/* Revenue Streams */}
-      <Card className="p-4 bg-white border-[#E8DCC8]">
-        <h3 className="font-medium text-[#4A3F35] mb-3">Revenue Streams</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {canvas.revenue_streams.map((stream, i) => (
-            <div
-              key={i}
-              className="p-3 bg-[#F5F1E8]/50 rounded-lg border border-[#D4C4AF]"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-[#4A3F35]">{stream.name}</span>
-                <Badge variant="outline">{stream.type}</Badge>
-              </div>
-              <p className="text-[#8B7B6E] text-sm mt-1">{stream.pricing}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Unfair Advantage */}
-      {canvas.unfair_advantage && (
-        <Card className="p-4 bg-white border-[#E8DCC8]">
-          <h3 className="font-medium text-[#4A3F35] mb-2">Unfair Advantage</h3>
-          <p className="text-[#4A3F35]">{canvas.unfair_advantage}</p>
-        </Card>
-      )}
-    </div>
-  )
-}
 
 function BrandTab({ business }: { business: Business }) {
   if (!business.brand_colors) {

@@ -1,65 +1,148 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { MODELS } from '@/components/shared/ModelPicker'
+import { PromptBox } from '@/components/shared/PromptBox'
+import type { User } from '@supabase/supabase-js'
+
+export default function StartPage() {
+  const [prompt, setPrompt] = useState('')
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-3-pro')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setAuthLoading(false)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.refresh()
+  }
+
+  const handleSubmit = async () => {
+    if (!prompt.trim()) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          model: MODELS[selectedModel as keyof typeof MODELS]
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create business')
+      }
+
+      const { id } = await response.json()
+      router.push(`/workspace/${id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setLoading(false)
+    }
+  }
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-background flex flex-col p-4 md:p-8">
+      {/* Header */}
+      <header className="flex justify-end mb-8">
+        {!authLoading && (
+          <>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  {user.email}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                >
+                  Sign out
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link href="/login">
+                  <Button variant="outline" size="sm">
+                    Sign in
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button size="sm">
+                    Sign up
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </header>
+
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="w-full max-w-2xl space-y-8">
+          {/* Logo */}
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+              Anything
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              AI-powered business operating systems
+            </p>
+          </div>
+
+        {/* Headline */}
+        <h2 className="text-2xl md:text-3xl font-semibold text-foreground text-center">
+          What business should I build for you?
+        </h2>
+
+        {/* Input */}
+        <div className="space-y-4">
+          <PromptBox
+            value={prompt}
+            onChange={setPrompt}
+            onSubmit={handleSubmit}
+            model={selectedModel}
+            onModelChange={setSelectedModel}
+            placeholder="Describe your business idea... e.g., 'A yoga studio in Stockholm for busy professionals'"
+            disabled={loading}
+            loading={loading}
+            multiline
+          />
+
+          {error && (
+            <p className="text-red-600 text-sm text-center">{error}</p>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
         </div>
-      </main>
-    </div>
-  );
+      </div>
+    </main>
+  )
 }

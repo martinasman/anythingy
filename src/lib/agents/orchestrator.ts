@@ -52,7 +52,7 @@ const AGENTS: AgentConfig[] = [
       const result = await runArchitect(ctx)
       return result as unknown as Record<string, unknown>
     },
-    outputFields: ['website_structure'],
+    outputFields: ['website_structure', 'website_code'],
   },
   {
     name: 'connector',

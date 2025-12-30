@@ -35,3 +35,26 @@ export async function jsonCompletion<T>(
 
   return JSON.parse(jsonString.trim()) as T
 }
+
+// Helper for text/code completions (no JSON parsing)
+export async function textCompletion(
+  systemPrompt: string,
+  userPrompt: string,
+  model: string = MODEL
+): Promise<string> {
+  const response = await openrouter.chat.completions.create({
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 16384,
+  })
+
+  const content = response.choices[0]?.message?.content || ''
+
+  // Extract code from markdown blocks if present
+  const codeMatch = content.match(/```(?:jsx?|tsx?|javascript|typescript)?\s*([\s\S]*?)\s*```/)
+  return codeMatch ? codeMatch[1].trim() : content.trim()
+}

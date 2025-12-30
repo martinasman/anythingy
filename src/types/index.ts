@@ -39,6 +39,7 @@ export interface Business {
 
   // Architect Agent Output
   website_structure: WebsiteStructure | null
+  website_code: string | null  // Generated React/JSX code from Architect
 
   // Connector Agent Output
   customer_journey: CustomerJourney | null
@@ -492,4 +493,21 @@ export interface AgentRun {
   input: Record<string, unknown>
   output: Record<string, unknown> | null
   error: string | null
+}
+
+// ============ User Supabase Connection ============
+
+export interface UserSupabaseConnection {
+  id: string
+  user_id: string
+  created_at: string
+  updated_at: string
+  supabase_url: string
+  supabase_anon_key_encrypted: string
+  supabase_service_role_key_encrypted: string | null
+  status: 'pending' | 'active' | 'error'
+  last_verified_at: string | null
+  error_message: string | null
+  schema_version: number
+  last_migration_at: string | null
 }

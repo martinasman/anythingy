@@ -143,20 +143,9 @@ If the user asks to change something, provide the updated content they can use.`
         }
 
         if (parsed.updates && Object.keys(parsed.updates).length > 0) {
+          // Return proposed updates - don't apply immediately
+          // User will confirm via "Go with the plan" button
           updates = parsed.updates
-
-          // Apply updates to the database
-          const { error: updateError } = await supabase
-            .from('businesses')
-            .update(updates)
-            .eq('id', businessId)
-
-          if (updateError) {
-            console.error('Failed to apply updates:', updateError)
-            assistantMessage += '\n\n(Note: Failed to save changes to database)'
-          } else {
-            assistantMessage += '\n\n(Changes saved successfully)'
-          }
         }
       } catch {
         // If JSON parsing fails, just use the raw response
@@ -174,7 +163,7 @@ If the user asks to change something, provide the updated content they can use.`
 
     return NextResponse.json({
       message: assistantMessage,
-      updates: updates,
+      proposedUpdates: updates,
     })
   } catch (error) {
     console.error('Chat error:', error)

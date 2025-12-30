@@ -2,12 +2,14 @@
 
 import { useEffect, useState, use, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useSSEStream } from '@/hooks/useSSEStream'
 import { WorkspaceTabs } from '@/components/workspace/WorkspaceTabs'
-import { SideChat } from '@/components/workspace/SideChat'
-import { Button } from '@/components/ui/button'
+import { SideChat, type SidebarTab } from '@/components/workspace/SideChat'
+import { PromoBanner } from '@/components/workspace/PromoBanner'
+import { WorkspaceHeader } from '@/components/workspace/WorkspaceHeader'
+import { TabBar } from '@/components/workspace/TabBar'
+import { GlobalNav } from '@/components/shared/GlobalNav'
 import type { Business } from '@/types'
 import type { User } from '@supabase/supabase-js'
 
@@ -21,6 +23,8 @@ export default function WorkspacePage({
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('chat')
   const router = useRouter()
   const supabase = createClient()
 
@@ -36,6 +40,11 @@ export default function WorkspacePage({
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const handlePublish = () => {
+    // TODO: Implement publish functionality
+    console.log('Publish clicked')
   }
 
   const fetchBusiness = useCallback(async () => {
@@ -136,18 +145,35 @@ export default function WorkspacePage({
     )
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'brand', label: 'Brand' },
-    { id: 'website', label: 'Website' },
-    { id: 'flow', label: 'Flow' },
-    { id: 'analytics', label: 'Analytics' },
-  ]
-
   return (
-    <div className="h-screen bg-background flex">
-      {/* Left Sidebar - Chat */}
-      <div className="w-96 border-r border-border flex flex-col shrink-0">
+    <div className="h-screen bg-background flex flex-col">
+      {/* Global Nav */}
+      <GlobalNav user={user} tier="Free" onSignOut={handleLogout} />
+
+      {/* Promotional Banner */}
+      <PromoBanner />
+
+      {/* Main Header */}
+      <WorkspaceHeader
+        business={business}
+        user={user}
+        onSignOut={handleLogout}
+        onPublish={handlePublish}
+      />
+
+      {/* Tab Bar - contains both sidebar tabs and content tabs */}
+      <TabBar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        sidebarTab={sidebarTab}
+        onSidebarTabChange={setSidebarTab}
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
         <SideChat
           businessId={businessId}
           context={{ section: activeTab }}
@@ -155,75 +181,11 @@ export default function WorkspacePage({
           events={events}
           isStreaming={isStreaming}
           onBusinessUpdate={fetchBusiness}
+          collapsed={sidebarCollapsed}
+          sidebarTab={sidebarTab}
         />
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Unified Header with Tabs */}
-        <header className="h-12 border-b border-border flex items-center px-4 shrink-0 bg-white">
-          {/* Left: Back + Business Name */}
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              onClick={() => router.push('/')}
-              className="text-muted-foreground hover:text-foreground transition-colors text-lg"
-            >
-              ←
-            </button>
-            <span className="text-foreground font-semibold truncate max-w-[180px]">
-              {business.business_name || 'New Business'}
-            </span>
-          </div>
-
-          {/* Center: Tabs */}
-          <nav className="flex-1 flex items-center justify-center gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Right: Status + User */}
-          <div className="flex items-center gap-3">
-            {business.status === 'running' && (
-              <span className="px-2 py-0.5 text-xs bg-amber-500/20 text-amber-700 rounded-full">
-                Generating...
-              </span>
-            )}
-            {business.status === 'completed' && (
-              <span className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full">
-                Complete
-              </span>
-            )}
-            {business.status === 'failed' && (
-              <span className="px-2 py-0.5 text-xs bg-destructive/20 text-destructive rounded-full">
-                Failed
-              </span>
-            )}
-            {user ? (
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
-                Sign out
-              </Button>
-            ) : (
-              <Link href="/login">
-                <Button size="sm">
-                  Sign in
-                </Button>
-              </Link>
-            )}
-          </div>
-        </header>
-
-        {/* Tab Content */}
+        {/* Content */}
         <div className="flex-1 overflow-hidden">
           <WorkspaceTabs
             business={business}

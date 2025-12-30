@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS businesses (
 
   -- Architect Agent Output (Website)
   website_structure JSONB,
+  website_code TEXT,  -- Generated React/JSX code for WebContainers
 
   -- Connector Agent Output (Customer Flow)
   customer_journey JSONB,
@@ -321,6 +322,30 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 
 -- ============================================================
+-- USER SUPABASE CONNECTIONS (Link user's own Supabase project)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_supabase_connections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Connection details (encrypted)
+  supabase_url TEXT NOT NULL,
+  supabase_anon_key_encrypted TEXT NOT NULL,
+  supabase_service_role_key_encrypted TEXT,
+
+  -- Connection status
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'error')),
+  last_verified_at TIMESTAMPTZ,
+  error_message TEXT,
+
+  -- Schema tracking
+  schema_version INTEGER DEFAULT 0,
+  last_migration_at TIMESTAMPTZ
+);
+
+-- ============================================================
 -- INDEXES
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_businesses_user ON businesses(user_id);
@@ -359,6 +384,7 @@ CREATE INDEX IF NOT EXISTS idx_webhook_events_lookup ON webhook_events(provider,
 
 CREATE INDEX IF NOT EXISTS idx_agent_runs_business ON agent_runs(business_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_business ON chat_messages(business_id);
+CREATE INDEX IF NOT EXISTS idx_user_supabase_connections_user ON user_supabase_connections(user_id);
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS)
@@ -378,6 +404,7 @@ ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_supabase_connections ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Users can view own profile" ON users
@@ -460,6 +487,19 @@ CREATE POLICY "Users can manage chat messages" ON chat_messages
   FOR ALL USING (
     EXISTS (SELECT 1 FROM businesses WHERE businesses.id = chat_messages.business_id AND businesses.user_id = auth.uid())
   );
+
+-- User Supabase connections policies
+CREATE POLICY "Users can view own supabase connection" ON user_supabase_connections
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create supabase connection" ON user_supabase_connections
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own supabase connection" ON user_supabase_connections
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own supabase connection" ON user_supabase_connections
+  FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================================
 -- REALTIME

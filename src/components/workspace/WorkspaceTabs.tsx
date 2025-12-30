@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { WebsitePreview } from './WebsitePreview'
 import { FlowBuilder } from './FlowBuilder'
 import { OverviewTab } from './OverviewTab'
+import { SettingsPanel } from './SettingsPanel'
 import type { Business } from '@/types'
 
 interface WorkspaceTabsProps {
@@ -51,6 +52,12 @@ export function WorkspaceTabs({
       {activeTab === 'analytics' && (
         <div className="h-full overflow-auto p-6">
           <AnalyticsTab />
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div className="h-full">
+          <SettingsPanel />
         </div>
       )}
     </div>

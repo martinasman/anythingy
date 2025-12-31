@@ -439,6 +439,211 @@ export const productsTemplate = (content: Record<string, unknown>) => {
 `
 }
 
+// ============ Preview Sections (for Home page) ============
+
+export const servicesPreviewTemplate = (content: Record<string, unknown>) => {
+  const services = ((content.services || content.items || []) as Array<{
+    icon?: string
+    name?: string
+    title?: string
+    description?: string
+  }>).slice(0, 3) // Only show first 3
+
+  const viewAllHref = (content.view_all_href as string) || '/services'
+  const viewAllText = (content.view_all_text as string) || 'View All Services →'
+
+  return `
+<section class="services-preview py-20 px-4" style="background: var(--background)">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4" style="color: var(--text)">
+      ${content.headline || content.title || 'Our Services'}
+    </h2>
+    <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+      ${content.subheadline || content.subtitle || ''}
+    </p>
+    <div class="grid md:grid-cols-3 gap-8">
+      ${services.map(s => `
+        <div class="p-6 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-14 h-14 rounded-lg flex items-center justify-center mb-4 text-2xl" style="background: var(--secondary)">
+            ${s.icon || '⚡'}
+          </div>
+          <h3 class="text-xl font-semibold mb-3" style="color: var(--text)">${s.name || s.title || ''}</h3>
+          <p class="text-gray-600">${s.description || ''}</p>
+        </div>
+      `).join('')}
+    </div>
+    <div class="text-center mt-12">
+      <a href="${viewAllHref}" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors" style="background: var(--primary); color: white;">
+        ${viewAllText}
+      </a>
+    </div>
+  </div>
+</section>
+`
+}
+
+export const menuPreviewTemplate = (content: Record<string, unknown>) => {
+  const items = ((content.items || content.menu_items || []) as Array<{
+    name?: string
+    description?: string
+    price?: string
+    image?: string
+  }>).slice(0, 6) // Show up to 6 featured items
+
+  const viewAllHref = (content.view_all_href as string) || '/menu'
+  const viewAllText = (content.view_all_text as string) || 'View Full Menu →'
+
+  return `
+<section class="menu-preview py-20 px-4" style="background: var(--background)">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4" style="color: var(--text)">
+      ${content.headline || content.title || 'Featured Menu Items'}
+    </h2>
+    <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+      ${content.subheadline || content.subtitle || ''}
+    </p>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      ${items.map(item => `
+        <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+          <div class="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </div>
+          <div class="p-4">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-semibold text-lg" style="color: var(--text)">${item.name || ''}</h3>
+              <span class="font-bold" style="color: var(--primary)">${item.price || ''}</span>
+            </div>
+            <p class="text-gray-600 text-sm">${item.description || ''}</p>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="text-center mt-12">
+      <a href="${viewAllHref}" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors" style="background: var(--primary); color: white;">
+        ${viewAllText}
+      </a>
+    </div>
+  </div>
+</section>
+`
+}
+
+export const pricingPreviewTemplate = (content: Record<string, unknown>) => {
+  const tiers = ((content.tiers || content.plans || []) as Array<{
+    name?: string
+    price?: string
+    period?: string
+    description?: string
+    highlighted?: boolean
+  }>).slice(0, 2) // Show only 1-2 plans
+
+  const viewAllHref = (content.view_all_href as string) || '/pricing'
+  const viewAllText = (content.view_all_text as string) || 'See All Plans →'
+
+  return `
+<section class="pricing-preview py-20 px-4">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4" style="color: var(--text)">
+      ${content.headline || content.title || 'Simple Pricing'}
+    </h2>
+    <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+      ${content.subheadline || content.subtitle || ''}
+    </p>
+    <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+      ${tiers.map(tier => `
+        <div class="p-8 rounded-xl border-2 ${tier.highlighted ? 'shadow-lg' : ''}" style="border-color: ${tier.highlighted ? 'var(--primary)' : '#e5e7eb'}">
+          <h3 class="text-xl font-semibold mb-2">${tier.name || ''}</h3>
+          <div class="mb-4">
+            <span class="text-4xl font-bold" style="color: var(--primary)">${tier.price || ''}</span>
+            <span class="text-gray-500">${tier.period || '/month'}</span>
+          </div>
+          <p class="text-gray-600 mb-6">${tier.description || ''}</p>
+          <button class="w-full py-3 rounded-lg font-semibold transition-colors text-white" style="background: var(--primary)">
+            Get Started
+          </button>
+        </div>
+      `).join('')}
+    </div>
+    <div class="text-center mt-8">
+      <a href="${viewAllHref}" class="text-sm font-medium hover:underline" style="color: var(--primary)">
+        ${viewAllText}
+      </a>
+    </div>
+  </div>
+</section>
+`
+}
+
+// ============ Team Section ============
+
+export const teamTemplate = (content: Record<string, unknown>) => {
+  const members = (content.members || content.team || []) as Array<{
+    name?: string
+    title?: string
+    role?: string
+    bio?: string
+    specialization?: string
+    image?: string
+  }>
+
+  return `
+<section class="team py-20 px-4" style="background: var(--background)">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4" style="color: var(--text)">
+      ${content.headline || content.title || 'Our Team'}
+    </h2>
+    <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+      ${content.subheadline || content.subtitle || ''}
+    </p>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      ${members.map(member => `
+        <div class="text-center p-6 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-32 h-32 mx-auto rounded-full mb-4 flex items-center justify-center text-4xl font-bold text-white" style="background: linear-gradient(135deg, var(--primary), var(--accent))">
+            ${member.name?.[0] || '?'}
+          </div>
+          <h3 class="text-xl font-semibold mb-1" style="color: var(--text)">${member.name || ''}</h3>
+          <p class="text-sm font-medium mb-3" style="color: var(--primary)">${member.title || member.role || ''}</p>
+          ${member.specialization ? `<p class="text-sm text-gray-500 mb-3">${member.specialization}</p>` : ''}
+          <p class="text-gray-600 text-sm">${member.bio || ''}</p>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+</section>
+`
+}
+
+// ============ Stats Section ============
+
+export const statsTemplate = (content: Record<string, unknown>) => {
+  const stats = (content.stats || content.items || []) as Array<{
+    value?: string
+    label?: string
+  }>
+
+  return `
+<section class="stats py-20 px-4" style="background: var(--primary)">
+  <div class="max-w-6xl mx-auto">
+    ${content.headline ? `
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
+        ${content.headline}
+      </h2>
+    ` : ''}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      ${stats.map(stat => `
+        <div class="text-center text-white">
+          <div class="text-4xl md:text-5xl font-bold mb-2">${stat.value || ''}</div>
+          <div class="text-lg opacity-90">${stat.label || ''}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+</section>
+`
+}
+
 export const footerTemplate = (footer: { company_name?: string; tagline?: string; links?: Array<{ label: string; href: string }>; social?: Array<{ platform: string; url: string }> }) => `
 <footer class="py-12 px-4 border-t border-gray-200">
   <div class="max-w-6xl mx-auto">

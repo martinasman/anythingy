@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { openrouter, MODEL } from '@/lib/openrouter/client'
+import { getStalenessInfo, type FieldVersionInfo } from '@/lib/dependencies'
 
 // Map sections to their corresponding database fields
 const SECTION_TO_FIELDS: Record<string, string[]> = {
@@ -41,6 +42,25 @@ export async function POST(request: NextRequest) {
         { error: 'Business not found' },
         { status: 404 }
       )
+    }
+
+    // Get staleness info for reactive updates context
+    let stalenessContext = ''
+    try {
+      const staleInfo = await getStalenessInfo(businessId)
+      if (staleInfo.length > 0) {
+        stalenessContext = `
+
+STALE CONTENT ALERT: The following sections may be outdated and need regeneration:
+${staleInfo.map((s: FieldVersionInfo) => `- ${s.field_name}: ${s.stale_reason}`).join('\n')}
+
+When relevant to the conversation, proactively suggest updating these sections. For example:
+- "I notice your brand colors changed recently. Would you like me to update the website to match?"
+- "Your value proposition was updated. Should I refresh the website hero section to reflect this?"`
+      }
+    } catch (staleError) {
+      console.error('Failed to get staleness info:', staleError)
+      // Continue without staleness context
     }
 
     // Get chat history
@@ -90,7 +110,7 @@ Example response format:
   }
 }
 
-If the user's request is unclear or you need clarification, respond with just the message field and no updates.`
+If the user's request is unclear or you need clarification, respond with just the message field and no updates.${stalenessContext}`
     } else {
       systemPrompt = `You are an AI assistant helping to refine a business plan for "${business.business_name || 'a new business'}".
 
@@ -104,7 +124,7 @@ Business Context:
 ${currentSection ? `The user is currently viewing the ${currentSection} section.` : ''}
 
 Help the user refine and improve their business content. Be specific and actionable.
-If the user asks to change something, provide the updated content they can use.`
+If the user asks to change something, provide the updated content they can use.${stalenessContext}`
     }
 
     // Build messages array

@@ -57,7 +57,7 @@
   --popover: #FFFFFF;                             /* Pure white */
   --popover-foreground: #242424;
 
-  --primary: #15315B;                             /* Navy blue */
+  --primary: #1557F6;                             /* Bright blue */
   --primary-foreground: #FFFFFF;                  /* White text */
 
   --secondary: #F0F4F8;                           /* Light blue-gray */
@@ -67,30 +67,30 @@
   --muted-foreground: #6B6B6B;                    /* Medium gray */
 
   --accent: #E8EDF4;                              /* Light navy accent */
-  --accent-foreground: #15315B;
+  --accent-foreground: #1557F6;
 
   --destructive: #B91C1C;                         /* Red for errors */
 
   --border: #E5E3E0;                              /* Warm gray border */
   --input: #F6F4F2;
-  --ring: #3D5A8A;                                /* Medium navy focus ring */
+  --ring: #4A7FF8;                                /* Medium blue focus ring */
 
-  /* Chart colors - Navy blue shades */
-  --chart-1: #15315B;                             /* Navy */
-  --chart-2: #3D5A8A;                             /* Medium navy */
-  --chart-3: #6B7FA3;                             /* Light navy */
-  --chart-4: #93A8C4;                             /* Pale navy */
-  --chart-5: #0D2340;                             /* Dark navy */
+  /* Chart colors - Bright blue shades */
+  --chart-1: #1557F6;                             /* Bright blue */
+  --chart-2: #4A7FF8;                             /* Light blue */
+  --chart-3: #8AACFA;                             /* Lighter blue */
+  --chart-4: #C4D7FC;                             /* Very light blue */
+  --chart-5: #0A3AB3;                             /* Dark blue */
 
   /* Sidebar */
   --sidebar: #FFFFFF;
   --sidebar-foreground: #242424;
-  --sidebar-primary: #15315B;
+  --sidebar-primary: #1557F6;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F0F4F8;
   --sidebar-accent-foreground: #242424;
   --sidebar-border: #E5E3E0;
-  --sidebar-ring: #3D5A8A;
+  --sidebar-ring: #4A7FF8;
 }
 
 @layer base {

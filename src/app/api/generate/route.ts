@@ -14,12 +14,32 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient()
 
+    // Get authenticated user from Authorization header
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     // Create business record
     const { data, error } = await supabase
       .from('businesses')
       .insert({
         prompt: prompt.trim(),
         status: 'pending',
+        user_id: user.id,
       })
       .select('id')
       .single()

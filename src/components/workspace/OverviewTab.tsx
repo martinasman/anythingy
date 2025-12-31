@@ -16,10 +16,10 @@ const colors = {
   textLight: '#8A8A8A',
   border: '#E5E3E0',
   borderLight: '#EDEBE8',
-  // Navy blue accents (lighter shades of #15315B)
-  accent: '#15315B',
-  accentLight: '#3D5A8A',
-  accentLighter: '#6B7FA3',
+  // Bright blue accents (lighter shades of #1557F6)
+  accent: '#1557F6',
+  accentLight: '#4A7FF8',
+  accentLighter: '#8AACFA',
   accentBg: '#E8EDF4',
   accentBgLight: '#F0F4F8',
 }
@@ -204,7 +204,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
         </div>
 
         {/* Value Proposition - Dark gradient card */}
-        <div className="p-6 rounded-xl" style={{ background: `linear-gradient(to bottom right, ${colors.accent}, #0D2340)` }}>
+        <div className="p-6 rounded-xl" style={{ background: `linear-gradient(to bottom right, ${colors.accent}, #0A3AB3)` }}>
           <div className="flex items-center gap-2 mb-3">
             <Zap className="w-5 h-5" style={{ color: '#93B4E8' }} />
             <h3 className="font-semibold text-white">Value Proposition</h3>

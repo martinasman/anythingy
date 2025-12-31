@@ -7,15 +7,25 @@ import { OverviewTab } from './OverviewTab'
 import { SettingsPanel } from './SettingsPanel'
 import type { Business } from '@/types'
 
+type WebsiteViewMode = 'preview' | 'code'
+type WebsiteViewport = 'desktop' | 'tablet' | 'mobile'
+
 interface WorkspaceTabsProps {
   business: Business
   activeTab: string
   onTabChange: (tab: string) => void
+  // Website preview props
+  websiteViewMode?: WebsiteViewMode
+  websiteViewport?: WebsiteViewport
+  currentPageSlug?: string
 }
 
 export function WorkspaceTabs({
   business,
   activeTab,
+  websiteViewMode = 'preview',
+  websiteViewport = 'desktop',
+  currentPageSlug = '/',
 }: WorkspaceTabsProps) {
   return (
     <div className="h-full">
@@ -33,7 +43,12 @@ export function WorkspaceTabs({
 
       {activeTab === 'website' && (
         <div className="h-full">
-          <WebsitePreview business={business} />
+          <WebsitePreview
+            business={business}
+            viewMode={websiteViewMode}
+            viewport={websiteViewport}
+            currentPageSlug={currentPageSlug}
+          />
         </div>
       )}
 

@@ -1,6 +1,23 @@
 'use client'
 
-import { LayoutGrid, Palette, Globe, GitBranch, BarChart3, MessageSquare, History, ChevronLeft, ChevronRight, Settings } from 'lucide-react'
+import {
+  LayoutGrid,
+  Palette,
+  Globe,
+  GitBranch,
+  BarChart3,
+  MessageSquare,
+  History,
+  ChevronLeft,
+  ChevronRight,
+  Settings,
+  Eye,
+  Code,
+  Monitor,
+  Tablet,
+  Smartphone,
+  Download,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 
 interface Tab {
@@ -10,6 +27,8 @@ interface Tab {
 }
 
 type SidebarTab = 'chat' | 'history'
+type WebsiteViewMode = 'preview' | 'code'
+type WebsiteViewport = 'desktop' | 'tablet' | 'mobile'
 
 interface TabBarProps {
   activeTab: string
@@ -18,6 +37,14 @@ interface TabBarProps {
   onSidebarTabChange: (tab: SidebarTab) => void
   sidebarCollapsed: boolean
   onToggleSidebar: () => void
+  // Website-specific controls (only shown when Website tab is active)
+  websitePages?: { name: string; slug: string }[]
+  currentPageSlug?: string
+  onPageChange?: (slug: string) => void
+  viewMode?: WebsiteViewMode
+  onViewModeChange?: (mode: WebsiteViewMode) => void
+  viewport?: WebsiteViewport
+  onViewportChange?: (viewport: WebsiteViewport) => void
 }
 
 const TABS: Tab[] = [
@@ -36,11 +63,24 @@ export function TabBar({
   onSidebarTabChange,
   sidebarCollapsed,
   onToggleSidebar,
+  // Website controls
+  websitePages,
+  currentPageSlug,
+  onPageChange,
+  viewMode = 'preview',
+  onViewModeChange,
+  viewport = 'desktop',
+  onViewportChange,
 }: TabBarProps) {
+  const showWebsiteControls = activeTab === 'website'
+
   return (
     <div className="h-10 bg-background border-b border-border flex shrink-0">
       {/* Sidebar tabs section */}
-      <div className="shrink-0 border-r border-border flex items-center px-2 gap-1" style={{ width: sidebarCollapsed ? 48 : 320 }}>
+      <div
+        className="shrink-0 border-r border-border flex items-center px-2 gap-1"
+        style={{ width: sidebarCollapsed ? 48 : 320 }}
+      >
         {sidebarCollapsed ? (
           <button
             onClick={onToggleSidebar}
@@ -100,6 +140,94 @@ export function TabBar({
           </button>
         ))}
       </nav>
+
+      {/* Right side: Website controls (only when Website tab is active) */}
+      {showWebsiteControls && (
+        <div className="flex items-center gap-1 ml-auto pr-3">
+          {/* Page tabs */}
+          {websitePages && websitePages.length > 1 && (
+            <>
+              {websitePages.map((page) => (
+                <button
+                  key={page.slug}
+                  onClick={() => onPageChange?.(page.slug)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                    currentPageSlug === page.slug
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {page.name}
+                </button>
+              ))}
+              {/* Separator */}
+              <div className="w-px h-5 bg-border mx-1.5" />
+            </>
+          )}
+
+          {/* Preview/Code toggle */}
+          <button
+            onClick={() => onViewModeChange?.('preview')}
+            className={`p-1.5 rounded transition-colors ${
+              viewMode === 'preview'
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Preview"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onViewModeChange?.('code')}
+            className={`p-1.5 rounded transition-colors ${
+              viewMode === 'code'
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Code"
+          >
+            <Code className="w-4 h-4" />
+          </button>
+
+          {/* Separator */}
+          <div className="w-px h-5 bg-border mx-1.5" />
+
+          {/* Viewport buttons */}
+          <button
+            onClick={() => onViewportChange?.('desktop')}
+            className={`p-1.5 rounded transition-colors ${
+              viewport === 'desktop'
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Desktop"
+          >
+            <Monitor className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onViewportChange?.('tablet')}
+            className={`p-1.5 rounded transition-colors ${
+              viewport === 'tablet'
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Tablet"
+          >
+            <Tablet className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onViewportChange?.('mobile')}
+            className={`p-1.5 rounded transition-colors ${
+              viewport === 'mobile'
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+            title="Mobile"
+          >
+            <Smartphone className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

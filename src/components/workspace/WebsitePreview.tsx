@@ -1,30 +1,20 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
-import {
-  Monitor,
-  Tablet,
-  Smartphone,
-  RefreshCw,
-  ExternalLink,
-  Download,
-  Terminal,
-  ChevronDown,
-  Code,
-  Eye,
-  Loader2,
-} from 'lucide-react'
-import { useWebContainer } from '@/hooks/useWebContainer'
-import { generateViteProject, generateDefaultApp } from '@/lib/website/vite-template'
+import { Download, Loader2 } from 'lucide-react'
+import { generatePreviewHTML, getAvailablePages } from '@/lib/website/preview-generator'
 import type { Business } from '@/types'
+
+type ViewMode = 'preview' | 'code'
+type Viewport = 'desktop' | 'tablet' | 'mobile'
 
 interface WebsitePreviewProps {
   business: Business
+  viewMode: ViewMode
+  viewport: Viewport
+  currentPageSlug: string
 }
-
-type Viewport = 'desktop' | 'tablet' | 'mobile'
-type ActiveTab = 'preview' | 'code'
 
 const VIEWPORT_WIDTHS: Record<Viewport, string> = {
   desktop: '100%',
@@ -32,86 +22,39 @@ const VIEWPORT_WIDTHS: Record<Viewport, string> = {
   mobile: '375px',
 }
 
-export function WebsitePreview({ business }: WebsitePreviewProps) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('preview')
-  const [viewport, setViewport] = useState<Viewport>('desktop')
-  const [showTerminal, setShowTerminal] = useState(false)
-  const [code, setCode] = useState<string>('')
-  const [hasInitialized, setHasInitialized] = useState(false)
+export function WebsitePreview({
+  business,
+  viewMode,
+  viewport,
+  currentPageSlug,
+}: WebsitePreviewProps) {
+  const [html, setHtml] = useState<string>('')
 
-  const {
-    status,
-    previewUrl,
-    terminalOutput,
-    error,
-    mountFiles,
-    writeFile,
-    restart,
-  } = useWebContainer()
+  // Get available pages from website structure
+  const pages = getAvailablePages(business)
 
-  // Generate React code from business data
-  const generateCode = useCallback(() => {
-    // For now, use the website_code field if available, otherwise generate default
-    if (business.website_code) {
-      return business.website_code
-    }
-    return generateDefaultApp(
-      business.business_name || 'My Business',
-      business.tagline || undefined
-    )
-  }, [business.website_code, business.business_name, business.tagline])
-
-  // Initialize WebContainer when component mounts with complete data
+  // Generate static HTML when business or page changes
   useEffect(() => {
-    if (hasInitialized) return
-    if (!business.brand_colors) return
-    if (business.status !== 'completed') return
-
-    const componentCode = generateCode()
-    setCode(componentCode)
-
-    const files = generateViteProject({
-      businessName: business.business_name || 'My Business',
-      tagline: business.tagline || undefined,
-      brandColors: business.brand_colors,
-      offerings: [], // TODO: Fetch offerings from DB
-      componentCode,
-    })
-
-    mountFiles(files)
-    setHasInitialized(true)
-  }, [business, hasInitialized, mountFiles, generateCode])
-
-  // Update files when code changes in editor
-  const handleCodeChange = useCallback(
-    async (value: string | undefined) => {
-      if (!value || !business.brand_colors) return
-      setCode(value)
-
-      // Write just the App.jsx file for hot reload - Vite will handle the rest
-      await writeFile('/src/App.jsx', value)
-    },
-    [business.brand_colors, writeFile]
-  )
+    if (business.status === 'completed' && business.brand_colors) {
+      const previewHtml = generatePreviewHTML(business, currentPageSlug)
+      setHtml(previewHtml)
+    }
+  }, [business, currentPageSlug])
 
   const handleDownload = () => {
-    // Create a zip file with the project
-    // For now, just download the React code
-    const blob = new Blob([code], { type: 'text/javascript' })
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'App.jsx'
+    const pageName = pages.find(p => p.slug === currentPageSlug)?.name || 'page'
+    const fileName = currentPageSlug === '/'
+      ? `${business.business_name?.replace(/\s+/g, '-') || 'website'}.html`
+      : `${business.business_name?.replace(/\s+/g, '-') || 'website'}-${pageName.toLowerCase().replace(/\s+/g, '-')}.html`
+    a.download = fileName
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }
-
-  const handleOpenInNewTab = () => {
-    if (previewUrl) {
-      window.open(previewUrl, '_blank')
-    }
   }
 
   // Loading/waiting state
@@ -161,209 +104,66 @@ export function WebsitePreview({ business }: WebsitePreviewProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Toolbar */}
-      <div className="h-12 flex items-center justify-between px-4 border-b border-border bg-muted/30">
-        {/* Left: View Toggle */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-background rounded-lg p-1 border border-border">
-            <button
-              onClick={() => setActiveTab('preview')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                activeTab === 'preview'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              Preview
-            </button>
-            <button
-              onClick={() => setActiveTab('code')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                activeTab === 'code'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Code className="w-3.5 h-3.5" />
-              Code
-            </button>
-          </div>
-
-          {/* Viewport Toggle (only in preview mode) */}
-          {activeTab === 'preview' && (
-            <div className="flex items-center gap-1 ml-4">
-              <button
-                onClick={() => setViewport('desktop')}
-                className={`p-2 rounded transition-colors ${
-                  viewport === 'desktop'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-                title="Desktop"
-              >
-                <Monitor className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewport('tablet')}
-                className={`p-2 rounded transition-colors ${
-                  viewport === 'tablet'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-                title="Tablet"
-              >
-                <Tablet className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewport('mobile')}
-                className={`p-2 rounded transition-colors ${
-                  viewport === 'mobile'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-                title="Mobile"
-              >
-                <Smartphone className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Center: Status */}
-        <div className="flex items-center gap-2">
-          {status !== 'ready' && status !== 'idle' && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span className="capitalize">{status}...</span>
-            </div>
-          )}
-          {error && (
-            <span className="text-xs text-destructive">{error}</span>
-          )}
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowTerminal(!showTerminal)}
-            className={`p-2 rounded transition-colors ${
-              showTerminal
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-            title="Toggle Terminal"
-          >
-            <Terminal className="w-4 h-4" />
-          </button>
-          <button
-            onClick={restart}
-            disabled={status !== 'ready' && status !== 'error'}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50"
-            title="Restart Server"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleOpenInNewTab}
-            disabled={!previewUrl}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50"
-            title="Open in New Tab"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleDownload}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
-            title="Download"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+    <div className="h-full flex flex-col bg-background relative">
+      {/* Download button (floating) */}
+      <button
+        onClick={handleDownload}
+        disabled={!html}
+        className="absolute top-3 right-3 z-10 p-2 bg-background border border-border rounded-lg shadow-sm text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+        title="Download HTML"
+      >
+        <Download className="w-4 h-4" />
+      </button>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Preview/Code Area */}
-        <div className="flex-1 overflow-hidden">
-          {activeTab === 'preview' ? (
-            <div className="h-full flex items-start justify-center bg-muted/20 p-4 overflow-auto">
-              <div
-                className="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300"
-                style={{
-                  width: VIEWPORT_WIDTHS[viewport],
-                  maxWidth: '100%',
-                  height: viewport === 'desktop' ? '100%' : 'calc(100% - 32px)',
-                }}
-              >
-                {status === 'ready' && previewUrl ? (
-                  <iframe
-                    src={previewUrl}
-                    className="w-full h-full border-0"
-                    title="Website Preview"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-muted/30">
-                    <div className="text-center">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-                      <p className="text-sm text-muted-foreground">
-                        {status === 'booting' && 'Starting WebContainer...'}
-                        {status === 'mounting' && 'Loading project files...'}
-                        {status === 'installing' && 'Installing dependencies...'}
-                        {status === 'starting' && 'Starting dev server...'}
-                        {status === 'idle' && 'Initializing...'}
-                        {status === 'error' && 'Error occurred'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <Editor
-              height="100%"
-              defaultLanguage="javascript"
-              value={code}
-              onChange={handleCodeChange}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                wordWrap: 'on',
-                tabSize: 2,
-                automaticLayout: true,
-              }}
-            />
-          )}
-        </div>
-
-        {/* Terminal Panel */}
-        {showTerminal && (
-          <div className="border-t border-border bg-[#1e1e1e]">
+      <div className="flex-1 overflow-hidden">
+        {viewMode === 'preview' ? (
+          <div className="h-full flex items-start justify-center bg-muted/20 overflow-auto">
             <div
-              className="flex items-center justify-between px-4 py-2 bg-[#252526] cursor-pointer"
-              onClick={() => setShowTerminal(!showTerminal)}
+              className="bg-white overflow-hidden transition-all duration-300"
+              style={{
+                width: VIEWPORT_WIDTHS[viewport],
+                maxWidth: '100%',
+                height: '100%',
+              }}
             >
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-[#8B8B8B]" />
-                <span className="text-xs text-[#8B8B8B] font-medium">Terminal</span>
-              </div>
-              <ChevronDown className="w-4 h-4 text-[#8B8B8B]" />
-            </div>
-            <div className="h-40 overflow-auto p-3 font-mono text-xs">
-              {terminalOutput.map((line, i) => (
-                <div key={i} className="text-[#8B8B8B] whitespace-pre-wrap">
-                  {line}
+              {html ? (
+                <iframe
+                  srcDoc={html}
+                  className="w-full h-full border-0"
+                  title="Website Preview"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-muted/30">
+                  <div className="text-center max-w-md px-4">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+                    <p className="text-sm text-muted-foreground">
+                      Generating preview...
+                    </p>
+                  </div>
                 </div>
-              ))}
-              {terminalOutput.length === 0 && (
-                <div className="text-[#5A5A5A]">Terminal output will appear here...</div>
               )}
             </div>
           </div>
+        ) : (
+          <Editor
+            height="100%"
+            defaultLanguage="html"
+            value={html}
+            onChange={() => {}} // Read-only
+            theme="vs-dark"
+            options={{
+              minimap: { enabled: false },
+              fontSize: 13,
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              wordWrap: 'on',
+              tabSize: 2,
+              automaticLayout: true,
+              readOnly: true,
+            }}
+          />
         )}
       </div>
     </div>

@@ -53,14 +53,27 @@ export default function StartPage() {
 
   const handleSubmit = async () => {
     if (!prompt.trim()) return
+    if (!user) {
+      setError('Please log in to create a business')
+      return
+    }
 
     setLoading(true)
     setError(null)
 
     try {
+      // Get the session token for authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Authentication required')
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           prompt: prompt.trim(),
           model: MODELS[selectedModel as keyof typeof MODELS]

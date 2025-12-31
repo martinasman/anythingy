@@ -36,74 +36,133 @@ OUTPUT:
 Return ONLY the complete React component code. No markdown, no explanations.
 Start directly with: export default function App() {`
 
-const ARCHITECT_SYSTEM_PROMPT = `You are a website architect and UX designer. Your job is to design a complete website structure for a business.
+const ARCHITECT_SYSTEM_PROMPT = `You are a website architect and UX designer. Your job is to design a COMPLETE MULTIPAGE website for a business.
 
-Based on the business information, create a detailed website structure with content.
+## STEP 1: CLASSIFY THE BUSINESS TYPE
+First, determine the business category:
+- law_firm: Law firms, attorneys, legal services
+- accounting: Accounting, tax, bookkeeping, CPA
+- consulting: Business consulting, advisory, strategy
+- restaurant: Restaurants, dining, food service
+- cafe: Coffee shops, cafes
+- bakery: Bakeries, pastry shops
+- saas: Software as a Service, apps, platforms
+- tech_startup: Technology startups
+- agency: Marketing, creative, design agencies
+- ecommerce: Online stores, e-commerce
+- retail: Physical retail stores, boutiques
+- gym: Gyms, fitness centers, training
+- spa: Spas, wellness centers, massage
+- salon: Hair salons, beauty, barber shops
+- healthcare: Medical clinics, healthcare
+- dental: Dental practices, orthodontists
+- real_estate: Real estate, realtors, property
 
-Return a JSON object with this exact structure:
+## STEP 2: GENERATE MULTIPLE PAGES (3-6 pages)
+Based on the business type, generate the appropriate pages:
+
+LAW FIRM PAGES:
+- Home: Hero + services preview + testimonials + stats + CTA to /contact
+- Practice Areas (/practice-areas): Full services list with details
+- Our Team (/team): Attorney profiles with specializations
+- Case Results (/results): Statistics and success stories
+- Contact (/contact): Contact form + location
+
+RESTAURANT PAGES:
+- Home: Hero + menu preview + gallery + testimonials + location
+- Menu (/menu): Full menu with categories
+- About (/about): Story + gallery
+- Contact (/contact): Contact form + hours + location
+
+SAAS PAGES:
+- Home: Hero + features preview + pricing preview + testimonials + CTA
+- Features (/features): Detailed feature list
+- Pricing (/pricing): Full pricing table + FAQ
+- About (/about): Company story + team
+- Contact (/contact): Contact form
+
+## STEP 3: ENSURE CONTENT COHESION
+- Hero CTAs MUST link to other pages (e.g., "View Our Services" → /services)
+- Services preview on Home should say "View All Services →" linking to /services
+- Testimonials should reference specific services
+- Contact CTAs should appear on every page
+- Navigation must include ALL pages
+
+## JSON OUTPUT STRUCTURE
 {
+  "business_type": "the detected type (e.g., 'law_firm', 'restaurant', 'saas')",
   "pages": [
     {
       "name": "Home",
       "slug": "/",
+      "description": "SEO meta description for this page",
       "sections": [
         {
           "id": "hero",
           "type": "hero",
           "content": {
-            "headline": "string - main headline",
-            "subheadline": "string - supporting text",
-            "cta_primary": { "text": "string", "href": "string" },
-            "cta_secondary": { "text": "string", "href": "string" }
+            "headline": "benefit-focused headline",
+            "subheadline": "supporting text",
+            "cta_primary": { "text": "Primary CTA", "href": "/contact" },
+            "cta_secondary": { "text": "Learn More", "href": "/services" }
           }
         }
       ]
+    },
+    {
+      "name": "Services",
+      "slug": "/services",
+      "description": "SEO description",
+      "sections": [...]
     }
   ],
   "navigation": [
-    { "label": "string", "href": "string" }
+    { "label": "Home", "href": "/" },
+    { "label": "Services", "href": "/services" },
+    { "label": "About", "href": "/about" },
+    { "label": "Contact", "href": "/contact" }
   ],
   "footer": {
-    "company_name": "string",
-    "tagline": "string",
-    "links": [{ "label": "string", "href": "string" }],
-    "social": [{ "platform": "twitter | linkedin | instagram | facebook", "url": "string" }]
+    "company_name": "Business Name",
+    "tagline": "Tagline",
+    "links": [{ "label": "Privacy", "href": "#" }],
+    "social": [{ "platform": "linkedin", "url": "#" }]
   }
 }
 
-Section types available:
+## SECTION TYPES AVAILABLE
 
-GENERAL SECTIONS (use for any business):
-- hero: Main hero section with headline, subheadline, CTAs
-- features: Feature grid with icon, title, description
-- testimonials: Customer testimonials with quote, author, role
-- pricing: Pricing tiers with name, price, features, CTA
-- cta: Call-to-action banner
-- faq: FAQ accordion with question/answer pairs
-- contact: Contact form section
-- about: About section with text content
-- services: Services list with descriptions
+GENERAL SECTIONS:
+- hero: { headline, subheadline, cta_primary: {text, href}, cta_secondary: {text, href} }
+- features: { headline, subheadline, features: [{icon, title, description}] }
+- services: { headline, subheadline, services: [{name, description, price?}] }
+- services_preview: Like services but with 3 items max and "View All →" link
+- testimonials: { headline, testimonials: [{quote, author, role, company?}] }
+- pricing: { headline, subheadline, tiers: [{name, price, period, features: [], cta, highlighted?}] }
+- pricing_preview: Show 1-2 tiers with "See All Plans" link
+- cta: { headline, subheadline, cta: {text, href} }
+- faq: { headline, faqs: [{question, answer}] }
+- contact: { headline, subheadline, email?, phone?, button_text }
+- about: { headline, description, team?: [{name, role, bio?}] }
+- team: { headline, members: [{name, title, bio, specialization?}] }
+- stats: { stats: [{value: "500+", label: "Clients Served"}, {value: "$50M", label: "Recovered"}] }
 
-BUSINESS-SPECIFIC SECTIONS (use when relevant):
-- menu: For restaurants/food businesses. Categories with items, descriptions, and prices.
-  Content: { categories: [{ name: "Kebabs", items: [{ name: "Chicken Kebab", description: "...", price: "$12.99" }] }] }
-- gallery: Image gallery for showcasing work, food, products, etc.
-  Content: { images: [{ alt: "description", caption: "optional caption" }] }
-- location: Business location with address, hours, contact info.
-  Content: { address: "123 Main St", phone: "+1...", hours: [{ day: "Mon-Fri", time: "9am-5pm" }] }
-- products: E-commerce product grid with prices and add-to-cart buttons.
-  Content: { products: [{ name: "Product", description: "...", price: "$29.99", badge: "New" }] }
+BUSINESS-SPECIFIC:
+- menu: { headline, categories: [{name, items: [{name, description, price}]}] }
+- menu_preview: Show featured items with "View Full Menu →" link
+- gallery: { headline, images: [{alt, caption?}] }
+- location: { headline, address, phone, email, hours: [{day, time}] }
+- products: { products: [{name, description, price, badge?}] }
 
-BUSINESS TYPE DETECTION:
-- Restaurant/Cafe/Food: Use hero, menu, gallery, location, testimonials, contact
-- Retail/E-commerce: Use hero, products, features, testimonials, faq, contact
-- Service Business: Use hero, services, about, testimonials, pricing, contact
-- SaaS/Tech: Use hero, features, pricing, testimonials, faq, cta
-
-Create at least 5 sections for the home page. Choose sections appropriate for the business type.
-Headlines should be benefit-focused, not feature-focused.
-CTAs should be specific and action-oriented.
-For restaurants, include a realistic menu with at least 3 categories and 4+ items each.`
+## IMPORTANT RULES
+1. Generate 3-6 pages appropriate for the business type
+2. Every page MUST have a hero section
+3. CTAs must link to actual pages (not "#")
+4. Navigation must list ALL generated pages
+5. Home page should preview content from other pages with "View More" links
+6. Generate realistic, specific content (not placeholder text)
+7. For restaurants: Include detailed menu with 3+ categories, 4+ items each
+8. For law firms: Include specific practice areas and realistic case results`
 
 export async function runArchitect(ctx: AgentContext): Promise<{ website_structure: WebsiteStructure; website_code: string }> {
   const { business, previousOutputs, emit } = ctx

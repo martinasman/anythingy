@@ -10,8 +10,12 @@ import { PromoBanner } from '@/components/workspace/PromoBanner'
 import { WorkspaceHeader } from '@/components/workspace/WorkspaceHeader'
 import { TabBar } from '@/components/workspace/TabBar'
 import { GlobalNav } from '@/components/shared/GlobalNav'
+import { getAvailablePages } from '@/lib/website/preview-generator'
 import type { Business } from '@/types'
 import type { User } from '@supabase/supabase-js'
+
+type WebsiteViewMode = 'preview' | 'code'
+type WebsiteViewport = 'desktop' | 'tablet' | 'mobile'
 
 export default function WorkspacePage({
   params,
@@ -25,6 +29,10 @@ export default function WorkspacePage({
   const [user, setUser] = useState<User | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('chat')
+  // Website preview state
+  const [websiteViewMode, setWebsiteViewMode] = useState<WebsiteViewMode>('preview')
+  const [websiteViewport, setWebsiteViewport] = useState<WebsiteViewport>('desktop')
+  const [currentPageSlug, setCurrentPageSlug] = useState<string>('/')
   const router = useRouter()
   const supabase = createClient()
 
@@ -56,14 +64,22 @@ export default function WorkspacePage({
       .single()
 
     if (error || !data) {
-      console.error('Failed to fetch business:', error)
+      console.error('Failed to fetch business:', {
+        businessId,
+        error,
+        errorCode: error?.code,
+        errorMessage: error?.message,
+        userId: user?.id,
+        timestamp: new Date().toISOString(),
+        note: 'This typically means the business was not found or you do not have permission to access it. Check that the business user_id matches your user ID.'
+      })
       router.push('/')
       return
     }
 
     setBusiness(data as Business)
     setLoading(false)
-  }, [businessId, router])
+  }, [businessId, router, user?.id])
 
   // Memoize options to prevent infinite loop
   const options = useMemo(
@@ -169,6 +185,14 @@ export default function WorkspacePage({
         onSidebarTabChange={setSidebarTab}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+        // Website-specific controls (only shown when Website tab is active)
+        websitePages={activeTab === 'website' ? getAvailablePages(business) : undefined}
+        currentPageSlug={currentPageSlug}
+        onPageChange={setCurrentPageSlug}
+        viewMode={websiteViewMode}
+        onViewModeChange={setWebsiteViewMode}
+        viewport={websiteViewport}
+        onViewportChange={setWebsiteViewport}
       />
 
       {/* Main Content Area */}
@@ -191,6 +215,9 @@ export default function WorkspacePage({
             business={business}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            websiteViewMode={websiteViewMode}
+            websiteViewport={websiteViewport}
+            currentPageSlug={currentPageSlug}
           />
         </div>
       </div>

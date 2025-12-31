@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { markDependentsStale, type MarkStaleResult } from '@/lib/dependencies'
 
 // Allowed fields that can be updated via PATCH
 const ALLOWED_FIELDS = [
@@ -73,6 +74,18 @@ export async function PATCH(
 
     const supabase = createAdminClient()
 
+    // Fetch current state BEFORE updating (for change detection)
+    const { data: currentBusiness, error: fetchError } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !currentBusiness) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+    }
+
+    // Apply the update
     const { data, error } = await supabase
       .from('businesses')
       .update(updates)
@@ -88,7 +101,40 @@ export async function PATCH(
       )
     }
 
-    return NextResponse.json(data)
+    // Mark downstream dependents as stale
+    const staleResults: MarkStaleResult[] = []
+    for (const [field, newValue] of Object.entries(updates)) {
+      const oldValue = currentBusiness[field]
+      try {
+        const result = await markDependentsStale({
+          businessId: id,
+          changedField: field,
+          changedBy: 'user',
+          oldValue,
+          newValue,
+        })
+        if (result.staleFields.length > 0) {
+          staleResults.push(result)
+        }
+      } catch (staleError) {
+        console.error(`Failed to mark dependents stale for ${field}:`, staleError)
+        // Continue - staleness marking is not critical
+      }
+    }
+
+    // Collect all stale fields
+    const allStaleFields = [
+      ...new Set(staleResults.flatMap((r) => r.staleFields)),
+    ]
+    const allAffectedSections = [
+      ...new Set(staleResults.flatMap((r) => r.affectedSections)),
+    ]
+
+    return NextResponse.json({
+      ...data,
+      _staleFields: allStaleFields,
+      _affectedSections: allAffectedSections,
+    })
   } catch (error) {
     console.error('Error parsing request:', error)
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })

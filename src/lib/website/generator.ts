@@ -90,7 +90,7 @@ export function generateWebsiteHTML(
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: ${brandColors.primary || '#3B82F6'};
+      --primary: ${brandColors.primary || '#1557F6'};
       --secondary: ${brandColors.secondary || '#E5E7EB'};
       --accent: ${brandColors.accent || '#10B981'};
       --background: ${brandColors.background || '#F9FAFB'};

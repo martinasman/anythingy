@@ -389,7 +389,25 @@ export interface WebsitePage {
 
 export interface PageSection {
   id: string
-  type: 'hero' | 'features' | 'testimonials' | 'pricing' | 'cta' | 'faq' | 'contact' | 'about' | 'services' | 'menu' | 'gallery' | 'location' | 'products'
+  type:
+    | 'hero'
+    | 'features'
+    | 'testimonials'
+    | 'pricing'
+    | 'pricing_preview'
+    | 'cta'
+    | 'faq'
+    | 'contact'
+    | 'about'
+    | 'services'
+    | 'services_preview'
+    | 'menu'
+    | 'menu_preview'
+    | 'gallery'
+    | 'location'
+    | 'products'
+    | 'team'
+    | 'stats'
   content: Record<string, unknown>
 }
 
